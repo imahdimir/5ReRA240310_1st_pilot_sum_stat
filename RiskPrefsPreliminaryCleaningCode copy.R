@@ -30,6 +30,8 @@ install.packages("dplyr")    # alternative installation of the %>%
 install.packages('tidyverse')
 
 
+
+
 library(car)
 library(gt)
 library(htmltools)
@@ -49,7 +51,23 @@ library(dplyr)
 
 set.seed(42)
 
-base_wd <- '/Users/mmir/Library/CloudStorage/Dropbox/3-MBP/ReRA/RiskPreferences'
+
+# To create continual "numbering" for Fielding Waves, but with letters
+letters_continual_order <- function(num) {
+  final <- c()
+  for (i in c(1:num)) {
+    div_num = floor(i / 26)
+    mod_num = i %% 26
+    
+    to_append = paste0(paste(rep("Z", div_num), collapse = ""), LETTERS[mod_num])
+    final <- c(final, to_append)
+    # print(final)
+  }
+  final
+}
+
+
+base_wd <- '/Users/mmir/Library/CloudStorage/Dropbox/D1-P/ReRA/RiskPreferences'
 
 input_data_pilot <- paste0(base_wd, "/Pilot/")
 input_data_raw <- paste0(base_wd, "/Pilot/Raw/")
@@ -158,7 +176,7 @@ already_fielded %<>% mutate(RiskPrefsSurvey = ifelse(PilotTrack %in% c("TSN", "T
                                                      "Pilot", "Main"))
 
 # Pull in the HIT Table - this gives us the CreationTime of each HIT
-hittable <- read_csv(paste0(base_wd, "/Dropbox/WIAGL_DATA/HITTables/HITTable", date_for_hit_table, ".csv")) %>%
+hittable <- read_csv(paste0("/Users/mmir/Library/CloudStorage/Dropbox/D1-P/ReRA/HITTables/HITTABLE", date_for_hit_table, ".csv")) %>%
   select(HITId, CreationTime, Description) %>%
   filter(str_detect(Description, "preferences for different payouts at varying levels of risk")) %>%
   mutate(
@@ -210,4 +228,4 @@ merged_data %<>% select(-c("effective_surveycode", "WorkerId",
 merged_data <- merged_data[, c("workerNum", setdiff(colnames(merged_data), c("workerNum")))]
 merged_data %<>% mutate(total_payment = bonus_amount + 0.10)
 
-write.csv(merged_data, paste0(default_input, "RiskPreferences/Pilot/clean_riskprefs_", curr_date, ".csv"), row.names = F)
+write.csv(merged_data, paste0('/Users/mmir/Library/CloudStorage/Dropbox/D1-P/0-git-sf-P/ReRA-first-pilot-sum-stat-20240310-sf/mahdi-', curr_date, ".csv"), row.names = F)

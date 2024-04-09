@@ -3,100 +3,21 @@
     """
 
 import pandas as pd
-from matplotlib import pyplot as plt
-from path import Path
-import warnings
 
-warnings.filterwarnings('ignore')
+import sys
+from pathlib import Path
 
-class Dirs :
-    sf = '/Users/mmir/Library/CloudStorage/Dropbox/D1-P/0-git-sf-P/ReRA-first-pilot-sum-stat-20240310-sf'
-    sf = Path(sf)
-    inp = sf / 'inp'
-    med = sf / 'med'
-    out = sf / 'out'
-    pgt = inp / 'PageTimes'
+sys.path.append(Path.cwd().as_posix())
 
-dyr = Dirs()
+from prj.lib import d , f , v , c
 
-class Files :
-    cln_dta = dyr.inp / 'clean_riskprefs_2024-02-20.csv'
-    mahdi_cln_dta = dyr.med / 'mahdi-cln-data-2024-02-20.csv'
-
-    # out
-    t_all = dyr.out / 't_all.tex'
-    t_trcks = dyr.out / 't_trcks.tex'
-    t_pt = dyr.out / 't_pagetimes.tex'
-    t_ins = dyr.out / 't_ins.tex'
-    t_pay = dyr.out / 't_pay.tex'
-    t_idle = dyr.out / 't_idle.tex'
-    tot_idl = dyr.out / 'total_idle.tex'
-
-    s_dist = dyr.out / 'survey_dist.xlsx'
-    st_trck = dyr.out / 'survey_time_by_track.xlsx'
-
-    pgt_dist = dyr.out / 'page_times_dist.xlsx'
-    pgt_mean = dyr.out / 'page_times_mean.xlsx'
-    ins_dist = dyr.out / 'ins_times_dist.xlsx'
-    ins_mean = dyr.out / 'ins_mean.xlsx'
-    itr = 'ins_time_ratio.tex'
-    idl_time_pct = dyr.out / 'idle_time_pct.xlsx'
-
-fp = Files()
-
-class Vars :
-    start_dt = 'AcceptTime'
-    end_dt = 'SubmitTime'
-    id = 'workerNum'
-    scn = 'session.config.name'
-
-    dur = 'duration'
-    dur_m = 'duration_m'
-    dur_s = 'duration_s'
-    trck = 'Track'
-
-    pcod = 'participant_code'
-    eff_s_cod = 'effective_surveycode'
-    pgi = 'page_index'
-    epoch = 'epoch_time_completed'
-    s_c = 'session_code'
-    sc = 'session.code'
-
-    o2 = '2 * \sigma Outliers'
-    o2_pct = '2 * \sigma Ratio (\%)'
-
-    o3 = '3 * \sigma Outliers'
-    o3_pct = '3 * \sigma Ratio (\%)'
-
-    is_ins_pg = 'is_instruction_page'
-    page_name = 'page_name'
-    tot_pay = 'total_payment'
-    total_pay = 'Total Payment'
-
-    n = 'N'
-
-    tot_t = 'Total Time'
-    mean = 'mean'
-    std = 'std'
-    idx = 'index'
-    Mean = 'Mean'
-    Std = 'STD'
-
-v = Vars()
-
-class Constants :
-    a = 'All'
-    ins = 'Instructions'
-
-k = Constants()
-
-def format_seconds(s) :
+def fmt_as_hh_mm(s) :
     hours , remainder = divmod(s , 3600)
     minutes , seconds = divmod(remainder , 60)
-    return '{:02}:{:02}:{:02}'.format(int(hours) , int(minutes) , int(seconds))
+    return '{:02}:{:02}'.format(int(hours) , int(minutes))
 
 def format_dft(dft) :
-    dft.iloc[: , 2 :] = dft.iloc[: , 2 :].applymap(lambda x : format_seconds(x))
+    dft.iloc[: , 2 :] = dft.iloc[: , 2 :].applymap(lambda x : fmt_as_hh_mm(x))
     dft['count'] = dft['count'].astype(int)
     dft = dft.rename(columns = {
             'count' : v.n ,
@@ -112,39 +33,45 @@ def format_dft(dft) :
     return dft
 
 def read_in_page_times() :
-    """ read in page times keep only final sample from the cleaned data
+    """
+    read in page times keep only final sample from the cleaned data
     assert no duplicates on participant code and page index
     sort by page index
     calculate duration assuming page index is the order of the pages
     """
 
-    dyr.pgt.glob('*.csv')
+    ##
+    d.pgt.glob('*.csv')
 
     dfpt = pd.DataFrame()
-    for f in dyr.pgt.glob('*.csv') :
-        df = pd.read_csv(f)
+    for fn in d.pgt.glob('*.csv') :
+        df = pd.read_csv(fn)
         dfpt = pd.concat([dfpt , df])
 
-    df_c = pd.read_csv(fp.mahdi_cln_dta)
+    ##
+    df_c = pd.read_csv(f.mahdi_cln_dta)
 
     msk = dfpt[v.pcod].isin(df_c[v.eff_s_cod])
 
     df = dfpt[msk]
 
+    ##
     df = df.drop_duplicates()
 
+    ##
     assert df[[v.pcod , v.pgi]].duplicated().sum() == 0
 
+    ##
     df = df.sort_values(v.pgi)
-
     df[v.dur_s] = df.groupby(v.pcod)[v.epoch].diff()
 
+    ##
     return df
 
 def return_session_code_track_name_map_from_clean_data() :
     """ """
 
-    df_cln = pd.read_csv(fp.mahdi_cln_dta)
+    df_cln = pd.read_csv(f.mahdi_cln_dta)
 
     df = df_cln[[v.sc , v.scn]]
     df = df.drop_duplicates()
@@ -176,8 +103,11 @@ def mark_idle_times() :
 
 def read_cln_data_cal_dur_add_trck() :
     """ """
+
+    ##
+
     # read clean data
-    df = pd.read_csv(fp.cln_dta)
+    df = pd.read_csv(f.cln_dta)
 
     ##
     # convert to datetime
@@ -195,6 +125,77 @@ def read_cln_data_cal_dur_add_trck() :
 
     ##
     return df
+
+def cal_dur_by_track_fr_pg_times() :
+    """ """
+
+    ##
+    df = read_in_page_times()
+
+    ##
+    dfa = df.groupby(v.pcod)[v.dur_s].sum()
+    dfa = dfa.reset_index()
+
+    ##
+    dfc = pd.read_csv(f.mahdi_cln_dta)
+
+    ##
+    dfc = dfc[[v.eff_s_cod , v.scn]]
+
+    ##
+    dfa = dfa.merge(dfc , left_on = v.pcod , right_on = v.eff_s_cod)
+
+    ##
+    dfa[v.trck] = dfa[v.scn].apply(lambda x : ''.join(filter(str.isupper , x)))
+
+    ##
+    return dfa
+
+    ##
+
+def track_times_table_fr_pg_times() :
+    """ """
+
+    ##
+    df = cal_dur_by_track_fr_pg_times()
+
+    ##
+    # All tracks sum stat
+    dfa = df[v.dur_s].describe().to_frame().T
+    dfa = dfa.reset_index(drop = True)
+    dfa[v.trck] = c.a
+
+    ##
+    dfb = df.groupby(v.trck)[v.dur_s].describe()
+    dfb = dfb.reset_index()
+    dfb = dfb.sort_values(v.trck)
+
+    ##
+    dfa = pd.concat([dfb , dfa])
+
+    ##
+    dfa = format_dft(dfa)
+
+    ##
+    dfa.to_latex(f.t_all , index = False)
+
+    ##
+
+def track_times_dist_data_fr_pg_times() :
+    """ """
+
+    ##
+    df = cal_dur_by_track_fr_pg_times()
+
+    ##
+    df[v.dur_m] = df[v.dur_s] / 60
+
+    df = df[[v.dur_m]]
+
+    ##
+    df.to_excel(f.s_dist , index = False)
+
+    ##
 
 ##
 def make_hh_mm(df , start_col) :
@@ -228,7 +229,7 @@ def track_times_table() :
     dfa = make_hh_mm(dfa , 2)
 
     ##
-    dfa.to_latex(fp.t_all , index = False)
+    dfa.to_latex(f.t_all , index = False)
 
     ##
 
@@ -245,7 +246,7 @@ def time_distribution() :
     df = df[[v.dur_m]]
 
     ##
-    df[v.dur_m].to_excel(fp.s_dist , index = False)
+    df[v.dur_m].to_excel(f.s_dist , index = False)
 
     ##
 
@@ -289,7 +290,7 @@ def save_mean_std_time_by_track() :
     dfa = dfa.rename(columns = _cn)
 
     ##
-    dfa.to_excel(fp.st_trck)
+    dfa.to_excel(f.st_trck)
 
     ##
 
@@ -309,7 +310,7 @@ def cal_page_dur_save_dist_data() :
     df = df[[v.dur_m]]
 
     ##
-    df.to_excel(fp.pgt_dist , index = False)
+    df.to_excel(f.pgt_dist , index = False)
 
     ##
 
@@ -345,7 +346,7 @@ def page_time_by_track() :
             ':')[1 :]))
 
     ##
-    df3.to_latex(fp.t_pt , index = False)
+    df3.to_latex(f.t_pt , index = False)
 
     ##
 
@@ -380,7 +381,7 @@ def mean_page_times_by_track() :
     df3 = df3 / 60
 
     ##
-    df3.to_excel(fp.pgt_mean)
+    df3.to_excel(f.pgt_mean)
 
 ##
 
@@ -424,13 +425,13 @@ def instruction_page_times() :
             ':')[1 :]))
 
     ##
-    dfc.to_latex(fp.t_ins , index = False)
+    dfc.to_latex(f.t_ins , index = False)
 
     ##
     df[v.dur_m] = df[v.dur_s] / 60
 
     ##
-    df[v.dur_m].to_excel(fp.ins_dist , index = False)
+    df[v.dur_m].to_excel(f.ins_dist , index = False)
 
     ##
     # R Plot, all durations by track
@@ -453,10 +454,10 @@ def instruction_page_times() :
     df3 = df3 / 60
 
     ##
-    df3.to_excel(fp.ins_mean)
+    df3.to_excel(f.ins_mean)
 
     ##
-    dfp = pd.read_excel(fp.pgt_mean)
+    dfp = pd.read_excel(f.pgt_mean)
 
     ##
     dfp = dfp.set_index('Unnamed: 0')
@@ -472,7 +473,7 @@ def instruction_page_times() :
     df3 = df3.applymap(lambda x : f'{x:.1f}')
 
     ##
-    df3.to_latex(fp.itr , index = True)
+    df3.to_latex(f.itr , index = True)
 
 ##
 
@@ -554,7 +555,7 @@ def idle_time_detection() :
         df2[c] = df2[c].apply(lambda x : f'{x:.1f}')
 
     ##
-    df2.to_latex(fp.t_idle , index = False)
+    df2.to_latex(f.t_idle , index = False)
 
     ##
 
@@ -632,7 +633,7 @@ def total_idle_time_ratio() :
     df6 = df5[list(cols.keys())]
 
     ##
-    df6.to_excel(fp.idl_time_pct , index = False)
+    df6.to_excel(f.idl_time_pct , index = False)
 
     ##
 
@@ -640,7 +641,7 @@ def total_idle_time_ratio() :
 
     ##
     for c in range(1 , 4) :
-        df5.iloc[: , c] = df5.iloc[: , c].apply(format_seconds)
+        df5.iloc[: , c] = df5.iloc[: , c].apply(fmt_as_hh_mm)
 
     ##
     cols = [v.o2_pct , v.o3_pct]
@@ -660,7 +661,7 @@ def total_idle_time_ratio() :
     df5 = df5[list(cord.keys())]
 
     ##
-    df5.to_latex(fp.tot_idl , index = False)
+    df5.to_latex(f.tot_idl , index = False)
 
     ##
 
@@ -671,7 +672,7 @@ def total_idle_time_ratio() :
 def payments() :
     """ """
     ##
-    df = pd.read_csv(fp.cln_dta)
+    df = pd.read_csv(f.cln_dta)
 
     ##
     df[v.trck] = df[v.scn].apply(lambda x : ''.join(filter(str.isupper , x)))
@@ -736,7 +737,7 @@ def payments() :
     df3[v.n] = df3[v.n].astype(int).astype(str)
 
     ##
-    df3.to_latex(fp.t_pay , index = False)
+    df3.to_latex(f.t_pay , index = False)
 
     ##
 

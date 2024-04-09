@@ -1,10 +1,5 @@
 #!/usr/bin/env Rscript
 
-install.packages("data.table")
-install.packages("dplyr")
-install.packages("glue")
-install.packages("readxl")
-
 library("data.table")
 library("dplyr")
 library("plinkFile")
@@ -14,13 +9,13 @@ library("glue")
 library('readxl')
 
 
-out_dir <- '/Users/mmir/Library/CloudStorage/Dropbox/D1-P/0-git-sf-P/ReRA-first-pilot-sum-stat-20240310-sf/out'
+out_dir <- '/Users/mmir/Library/CloudStorage/Dropbox/D1-P/A1-GIT-SF/ReRA-first-pilot-sum-stat-20240310-sf/out'
 
 
 # survey time dist
 
-fpi <- glue('{out_dir}/dur_m.xlsx')
-fpo <- glue('{out_dir}/overall.png')
+fpi <- glue('{out_dir}/survey_dist.xlsx')
+fpo <- glue('{out_dir}/survey_dist.png')
 
 df <- read_excel(fpi)
 
@@ -28,14 +23,15 @@ df <- read_excel(fpi)
 ggplot(data.frame(df), aes(x = duration_m)) +
   geom_histogram(binwidth = 5, fill = "#56B4E9", colour = "#56B4E9", alpha = 0.5) +
   geom_vline(xintercept=mean(df$duration_m), linetype="dashed", color = 'red') +
+  geom_vline(xintercept=median(df$duration_m), linetype="dashed", color = 'black') +
   labs(x = "Duration (Minutes)",
        y = "Count") +
   scale_x_continuous(breaks=seq(0,155,5)) +
-  annotate("text", x=mean(df$duration_m) - 1.5, y=2.5, label= "mean", angle=90, size=6) +
+  annotate("text", x=mean(df$duration_m) - 1.5, y=5, label= "mean", angle=90, size=6) +
+  annotate("text", x=median(df$duration_m) - 1.5, y=5, label= "median", angle=90, size=6) +
   theme_bw() + 
   theme(text=element_text(size=20), panel.border = element_blank(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
-
 
 ggsave(fpo)
 

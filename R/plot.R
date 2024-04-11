@@ -14,6 +14,51 @@ out_dir <- '/Users/mmir/Library/CloudStorage/Dropbox/D1-P/A1-GIT-SF/ReRA-first-p
 
 # survey time dist
 
+
+fpi <- glue('{out_dir}/x_tot_dist.xlsx')
+fpo <- glue('{out_dir}/x_tot_dist.png')
+
+df <- read_excel(fpi)
+
+
+ggplot(data.frame(df), aes(x = duration_m)) +
+  geom_histogram(binwidth = 5, fill = "#56B4E9", colour = "#56B4E9", alpha = 0.5) +
+  geom_vline(xintercept=mean(df$duration_m), linetype="dashed", color = 'red') +
+  geom_vline(xintercept=median(df$duration_m), linetype="dashed", color = 'blue') +
+  labs(x = "Duration (Minutes)",
+       y = "Count") +
+  scale_x_continuous(breaks=seq(0,155,5)) +
+  annotate("text", x=mean(df$duration_m) - 2, y=4.5, label= "mean", angle=90, size=6) +
+  annotate("text", x=median(df$duration_m) - 2, y=4.5, label= "median", angle=90, size=6) +
+  theme_bw() + 
+  theme(text=element_text(size=20), panel.border = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+ggsave(fpo)
+
+
+fp <- glue('{out_dir}/x_tot_by_trck.xlsx')
+df <- read_excel(fp, col_names = T)
+fpo <- glue('{out_dir}/tot_by_trck.png')
+
+#df <- df[order(df$Track),]
+
+
+ggplot(df) + 
+  geom_bar(aes(x=Track, y=y, fill=factor(ytype)), position="dodge", stat="identity", alpha = .5) + 
+  geom_errorbar(aes(x=Track, ymin=y-std, ymax=y+std, group=factor(Track)), width=0.2, colour="orange", alpha=.5 , size=1.2) +
+  labs(x = '', y = "Minutes") +
+  scale_y_continuous(breaks=seq(0,80,5)) +
+  theme_bw() +
+  theme(text=element_text(size=20), panel.border = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),legend.title = element_blank())
+
+ggsave(fpo)
+
+
+
+
+
 fpi <- glue('{out_dir}/survey_dist.xlsx')
 fpo <- glue('{out_dir}/survey_dist.png')
 
@@ -23,7 +68,7 @@ df <- read_excel(fpi)
 ggplot(data.frame(df), aes(x = duration_m)) +
   geom_histogram(binwidth = 5, fill = "#56B4E9", colour = "#56B4E9", alpha = 0.5) +
   geom_vline(xintercept=mean(df$duration_m), linetype="dashed", color = 'red') +
-  geom_vline(xintercept=median(df$duration_m), linetype="dashed", color = 'black') +
+  geom_vline(xintercept=median(df$duration_m), linetype="dashed", color = 'blue') +
   labs(x = "Duration (Minutes)",
        y = "Count") +
   scale_x_continuous(breaks=seq(0,155,5)) +
@@ -36,25 +81,32 @@ ggplot(data.frame(df), aes(x = duration_m)) +
 ggsave(fpo)
 
 
+
+
+
+
+
+
 # survey time by track
 
 fp <- glue('{out_dir}/survey_time_by_track.xlsx')
 df <- read_excel(fp, col_names = T)
 fpo <- glue('{out_dir}/survey_time_by_track.png')
 
+#df <- df[order(df$Track),]
+
 
 ggplot(df) + 
-  geom_bar(aes(x=Track, y=Mean, group=factor(Track)), position="dodge", stat="identity", fill='#56B4E9', alpha = .5) + 
-  scale_x_discrete(limits = df$Track) +
-  scale_y_discrete(limits = seq(0, 80, 10)) + 
-  geom_errorbar(aes(x=Track, ymin=Mean-STD, ymax=Mean+STD, group=factor(Track)), width=0.3, colour="orange", alpha=.9, size=1.2) +
-  labs(x = '',
-       y = "Mean Time (Minutes)") +
-  theme_bw() + 
+  geom_bar(aes(x=Track, y=y, fill=factor(ytype)), position="dodge", stat="identity", alpha = .5) + 
+  geom_errorbar(aes(x=Track, ymin=y-std, ymax=y+std, group=factor(Track)), width=0.2, colour="orange", alpha=.5 , size=1) +
+  labs(x = '', y = "Minutes") +
+  
+  theme_bw() +
   theme(text=element_text(size=20), panel.border = element_blank(), panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),legend.title = element_blank())
 
 ggsave(fpo)
+
 
 ###
 

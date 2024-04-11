@@ -14,7 +14,14 @@ from prj.lib import d , f , v , c
 def fmt_as_hh_mm(s) :
     hours , remainder = divmod(s , 3600)
     minutes , seconds = divmod(remainder , 60)
+    if seconds > 30 :
+        minutes += 1
     return '{:02}:{:02}'.format(int(hours) , int(minutes))
+
+def fmt_as_mm_ss(s) :
+    hours , remainder = divmod(s , 3600)
+    minutes , seconds = divmod(remainder , 60)
+    return '{:02}:{:02}'.format(int(minutes) , int(seconds))
 
 def format_dft(dft) :
     dft.iloc[: , 2 :] = dft.iloc[: , 2 :].applymap(lambda x : fmt_as_hh_mm(x))
@@ -126,7 +133,7 @@ def read_cln_data_cal_dur_add_trck() :
     ##
     return df
 
-def cal_dur_by_track_fr_pg_times() :
+def cal_response_time_fr_pg_times() :
     """ """
 
     ##
@@ -157,7 +164,7 @@ def track_times_table_fr_pg_times() :
     """ """
 
     ##
-    df = cal_dur_by_track_fr_pg_times()
+    df = cal_response_time_fr_pg_times()
 
     ##
     # All tracks sum stat
@@ -185,7 +192,7 @@ def track_times_dist_data_fr_pg_times() :
     """ """
 
     ##
-    df = cal_dur_by_track_fr_pg_times()
+    df = cal_response_time_fr_pg_times()
 
     ##
     df[v.dur_m] = df[v.dur_s] / 60
@@ -214,7 +221,7 @@ def track_times_table() :
     # summary statistics - up to minutes
     dfa = df[v.dur_s].describe().to_frame().T
     dfa = dfa.reset_index(drop = True)
-    dfa[v.trck] = k.a
+    dfa[v.trck] = c.a
 
     dfb = df.groupby(v.trck)[v.dur_s].describe()
     dfb = dfb.reset_index()
@@ -226,13 +233,11 @@ def track_times_table() :
     dfa = format_dft(dfa)
 
     ##
-    dfa = make_hh_mm(dfa , 2)
-
-    ##
-    dfa.to_latex(f.t_all , index = False)
+    dfa.to_latex(f.t_tot_mturk , index = False)
 
     ##
 
+##
 def time_distribution() :
     """ """
 
@@ -246,7 +251,7 @@ def time_distribution() :
     df = df[[v.dur_m]]
 
     ##
-    df[v.dur_m].to_excel(f.s_dist , index = False)
+    df[v.dur_m].to_excel(f.x_tot_dist , index = False)
 
     ##
 
@@ -264,33 +269,111 @@ def save_mean_std_time_by_track() :
     c2k = {
             0 : v.mean ,
             1 : v.std ,
+            2 : v.n50 ,
             }
 
     df1 = df1[c2k.values()]
-    df1.index = [k.a]
+    df1[v.trck] = c.a
 
     ##
     df2 = df.groupby(v.trck)[v.dur_s].describe()
     df2 = df2[c2k.values()]
+    df2 = df2.reset_index()
+    df2 = df2.sort_values(v.trck)
 
     ##
     dfa = pd.concat([df2 , df1])
 
     ##
-    dfa = dfa / 60
+    dfa.iloc[: , 1 :] = dfa.iloc[: , 1 :] / 60
 
     ##
-    dfa = dfa.reset_index()
-
     _cn = {
             v.idx  : v.trck ,
             v.mean : v.Mean ,
             v.std  : v.Std ,
+            v.n50  : v.med ,
             }
     dfa = dfa.rename(columns = _cn)
 
     ##
-    dfa.to_excel(f.st_trck)
+    dfc = dfa[[v.trck]]
+    dfc[v.y] = dfa[v.Mean]
+    dfc[v.std] = dfa[v.Std]
+    dfc[v.ytype] = v.Mean
+
+    ##
+    dfd = dfa[[v.trck]]
+    dfd[v.y] = dfa[v.med]
+    dfd[v.ytype] = v.med
+
+    ##
+    dfe = pd.concat([dfc , dfd])
+
+    ##
+    dfe.to_excel(f.x_tot_by_trck , index = False)
+
+    ##
+
+def get_mean_med_time_by_trck_fr_pg_times() :
+    """ """
+
+    ##
+    df = cal_response_time_fr_pg_times()
+
+    ##
+    dfa = df[v.dur_s].describe().to_frame().T
+
+    ##
+    # R Plot, all durations by track
+    c2k = {
+            0 : v.mean ,
+            1 : v.std ,
+            2 : v.n50 ,
+            }
+
+    dfa = dfa[c2k.values()]
+    dfa = dfa.reset_index(drop = True)
+    dfa[v.trck] = c.a
+
+    ##
+    dfb = df.groupby(v.trck)[v.dur_s].describe()
+    dfb = dfb[c2k.values()]
+    dfb = dfb.reset_index()
+    dfb = dfb.sort_values(v.trck)
+
+    ##
+    dfa = pd.concat([dfb , dfa])
+
+    ##
+    dfa.iloc[: , 1 :] = dfa.iloc[: , 1 :] / 60
+
+    ##
+    _cn = {
+            v.idx  : v.trck ,
+            v.mean : v.Mean ,
+            v.std  : v.Std ,
+            v.n50  : v.med ,
+            }
+
+    dfa = dfa.rename(columns = _cn)
+
+    ##
+    dfc = dfa[[v.trck]]
+    dfc[v.y] = dfa[v.Mean]
+    dfc[v.std] = dfa[v.Std]
+    dfc[v.ytype] = v.Mean
+
+    ##
+    dfd = dfa[[v.trck]]
+    dfd[v.y] = dfa[v.med]
+    dfd[v.ytype] = v.med
+
+    ##
+    dfe = pd.concat([dfc , dfd])
+
+    ##
+    dfe.to_excel(f.st_trck , index = False)
 
     ##
 
@@ -324,7 +407,7 @@ def page_time_by_track() :
     df1 = dfa[v.dur_s].describe().to_frame().T
 
     df1 = df1.reset_index(drop = True)
-    df1[v.trck] = k.a
+    df1[v.trck] = c.a
 
     ##
     dfm = return_session_code_track_name_map_from_clean_data()
@@ -339,14 +422,40 @@ def page_time_by_track() :
     df3 = pd.concat([df2 , df1])
 
     ##
-    df3 = format_dft(df3)
-
-    ##
-    df3.iloc[: , 2 :] = df3.iloc[: , 2 :].applymap(lambda x : ':'.join(x.split(
-            ':')[1 :]))
+    df3.iloc[: , 2 :] = df3.iloc[: , 2 :].applymap(fmt_as_mm_ss)
+    df3['count'] = df3['count'].astype(int)
+    df3 = df3.astype('string')
 
     ##
     df3.to_latex(f.t_pt , index = False)
+
+    ##
+
+def page_time_idxmax() :
+    """ """
+
+    ##
+    df = read_in_page_times()
+
+    ##
+    dfm = return_session_code_track_name_map_from_clean_data()
+    df[v.trck] = df[v.s_c].map(dfm[v.trck])
+
+    ##
+    df = df.reset_index(drop = True)
+    idx = df.groupby(v.trck)[v.dur_s].idxmax()
+
+    ##
+    dfb = df.loc[idx]
+    dfb = dfb.sort_values(v.trck)
+
+    ##
+    dfb = dfb[[v.trck , v.page_name , v.pgi]]
+
+    ##
+    dfb.to_latex(f.t_idxmax , index = False)
+
+    ##
 
     ##
 
@@ -392,7 +501,7 @@ def instruction_page_times() :
     df = read_in_page_times()
 
     ##
-    df[v.is_ins_pg] = df[v.page_name].str.contains(k.ins , case = False)
+    df[v.is_ins_pg] = df[v.page_name].str.contains(c.ins , case = False)
 
     ##
     df = df[df[v.is_ins_pg]]
@@ -406,7 +515,7 @@ def instruction_page_times() :
 
     ##
     dfa = dfa.reset_index(drop = True)
-    dfa[v.trck] = k.a
+    dfa[v.trck] = c.a
 
     ##
     dfb = df.groupby(v.trck)[v.dur_s].describe()
@@ -665,12 +774,23 @@ def total_idle_time_ratio() :
 
     ##
 
+##
+def consent_page_times() :
+    """ """
+
+    ##
+    dfa = read_cln_data_cal_dur_add_trck()
+    dfa = dfa
+
     ##
 
     ##
+
+##
 
 def payments() :
     """ """
+
     ##
     df = pd.read_csv(f.cln_dta)
 
@@ -740,5 +860,158 @@ def payments() :
     df3.to_latex(f.t_pay , index = False)
 
     ##
+
+    ##
+
+def find_extremely_low_response_times() :
+    """ """
+
+    ##
+    df = read_cln_data_cal_dur_add_trck()
+
+    ##
+    df[v.dur_m] = df[v.dur_s] / 60
+
+    ##
+    df[v.lt5] = df[v.dur_m].lt(5)
+
+    ##
+    df[v.lt10] = df[v.dur_m].lt(10)
+
+    ##
+    dfa = df[[v.lt5 , v.lt10]].sum().to_frame().T
+    dfa[v.trck] = c.a
+
+    ##
+    dfb = df.groupby(v.trck)[[v.lt5 , v.lt10]].sum()
+    dfb = dfb.reset_index()
+    dfb = dfb.sort_values(v.trck)
+
+    ##
+    dfc = pd.concat([dfb , dfa])
+
+    ##
+    dfc.to_latex(f.t_exc_l_t , index = False)
+
+    ##
+
+def find_extremely_low_response_times_otree() :
+    """ """
+
+    ##
+    df = cal_response_time_fr_pg_times()
+
+    ##
+    df[v.dur_m] = df[v.dur_s] / 60
+
+    ##
+    df[v.lt5] = df[v.dur_m].lt(5)
+
+    ##
+    df[v.lt10] = df[v.dur_m].lt(10)
+
+    ##
+    dfa = df[[v.lt5 , v.lt10]].sum().to_frame().T
+    dfa[v.trck] = c.a
+
+    ##
+    dfb = df.groupby(v.trck)[[v.lt5 , v.lt10]].sum()
+    dfb = dfb.reset_index()
+    dfb = dfb.sort_values(v.trck)
+
+    ##
+    dfc = pd.concat([dfb , dfa])
+
+    ##
+    dfc.to_latex(f.t_exc_l_t , index = False)
+
+    ##
+
+def sum_instruction_pages() :
+    """ """
+
+    ##
+    df = read_in_page_times()
+
+    ##
+    df[v.is_ins_pg] = df[v.page_name].str.contains(c.ins , case = False)
+
+    ##
+    df = df[df[v.is_ins_pg]]
+
+    ##
+    dfm = return_session_code_track_name_map_from_clean_data()
+    df[v.trck] = df[v.s_c].map(dfm[v.trck])
+
+    ##
+    dfa = df.groupby(v.pcod)[v.dur_s].sum()
+    dfa = dfa.reset_index()
+
+    ##
+    dfz = df.drop_duplicates(subset = [v.pcod , v.trck])
+    dfz = dfz[[v.pcod , v.trck]]
+
+    ##
+    dfa[v.trck] = dfa[v.pcod].map(dfz.set_index(v.pcod)[v.trck])
+
+    ##
+    dfb = dfa[[v.dur_s]].describe().T
+    dfb[v.trck] = c.a
+
+    ##
+    dfc = dfa.groupby(v.trck)[v.dur_s].describe()
+    dfc = dfc.reset_index()
+    dfc = dfc.sort_values(v.trck)
+
+    ##
+    dfd = pd.concat([dfc , dfb])
+
+    ##
+    dfd = format_dft(dfd)
+
+    ##
+    dfd.to_latex(f.t_ins_sum , index = False)
+
+    ##
+
+    ##
+
+def pages_count_by_track() :
+    """ """
+
+    ##
+    df = read_in_page_times()
+
+    ##
+    df1 = pd.read_csv(f.mahdi_cln_dta)
+    df1 = df1[[v.eff_s_cod , v.scn]]
+
+    ##
+    df = df.merge(df1 , left_on = v.pcod , right_on = v.eff_s_cod)
+
+    ##
+    df[v.trck] = df[v.scn].apply(lambda x : ''.join(filter(str.isupper , x)))
+
+    ##
+    dfa = df.groupby(v.trck).count()
+    dfa['# Pages'] = dfa[v.pcod]
+    dfa = dfa[['# Pages']]
+
+    ##
+    dfb = df.groupby(v.trck)[v.pcod].nunique()
+    dfb = dfb.to_frame()
+
+    ##
+    dfc = dfa.merge(dfb , left_index = True , right_index = True)
+
+    ##
+    dfc['mean # pages'] = dfc['# Pages'] / dfc[v.pcod]
+
+    ##
+    dfc['mean # pages'] = dfc['mean # pages'].round()
+    dfc = dfc.astype(int)
+
+    ##
+    dfc.to_latex(f.t_trck_n_pg)
 
     ##

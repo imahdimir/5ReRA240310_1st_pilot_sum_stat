@@ -17,6 +17,7 @@ class Files :
     mahdi_cln_dta = d.med / 'mahdi-cln-data-2024-02-20.csv'
 
     # out
+    t_tot_mturk = d.out / 't_tot_mturk.tex'
     t_all = d.out / 't_all.tex'
     t_trcks = d.out / 't_trcks.tex'
     t_pt = d.out / 't_pagetimes.tex'
@@ -24,9 +25,15 @@ class Files :
     t_pay = d.out / 't_pay.tex'
     t_idle = d.out / 't_idle.tex'
     tot_idl = d.out / 'total_idle.tex'
+    t_exc_l_t = d.out / 't_exc_lt.tex'
+    t_idxmax = d.out / 't_idxmax.tex'
+    t_ins_sum = d.out / 't_ins_sum.tex'
+    t_trck_n_pg = d.out / 't_trck_n_pg.tex'
 
     s_dist = d.out / 'survey_dist.xlsx'
     st_trck = d.out / 'survey_time_by_track.xlsx'
+    x_tot_dist = d.out / 'x_tot_dist.xlsx'
+    x_tot_by_trck = d.out / 'x_tot_by_trck.xlsx'
 
     pgt_dist = d.out / 'page_times_dist.xlsx'
     pgt_mean = d.out / 'page_times_mean.xlsx'
@@ -70,10 +77,18 @@ class Vars :
 
     tot_t = 'Total Time'
     mean = 'mean'
+    med = 'Medain'
     std = 'std'
     idx = 'index'
     Mean = 'Mean'
     Std = 'STD'
+
+    n50 = '50%'
+    y = 'y'
+    ytype = 'ytype'
+
+    lt5 = 'lt5'
+    lt10 = 'lt10'
 
 v = Vars()
 

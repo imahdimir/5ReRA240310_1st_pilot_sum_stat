@@ -46,7 +46,7 @@ fpo <- glue('{out_dir}/tot_by_trck.png')
 
 ggplot(df) + 
   geom_bar(aes(x=Track, y=y, fill=factor(ytype)), position="dodge", stat="identity", alpha = .5) + 
-  geom_errorbar(aes(x=Track, ymin=y-std, ymax=y+std, group=factor(Track)), width=0.2, colour="orange", alpha=.5 , size=1.2) +
+  geom_errorbar(aes(x=Track, ymin=y-std, ymax=y+std, group=factor(Track)), width=0.2, colour="orange", alpha=.8 , size=1.2) +
   labs(x = '', y = "Minutes") +
   scale_y_continuous(breaks=seq(0,80,5)) +
   theme_bw() +
@@ -54,8 +54,6 @@ ggplot(df) +
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),legend.title = element_blank())
 
 ggsave(fpo)
-
-
 
 
 

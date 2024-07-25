@@ -1015,3 +1015,54 @@ def pages_count_by_track() :
     dfc.to_latex(f.t_trck_n_pg)
 
     ##
+
+
+def _test():
+    pass
+
+    ##
+    import numpy as np
+
+    fn = '/Users/mmir/Library/CloudStorage/Dropbox/chr22.ibdmatrix'
+
+    arr = np.loadtxt(fn , delimiter = " ")
+
+    ##
+    import pandas as pd
+
+    df0 = pd.read_csv(fn , sep = '\s')
+
+    ##
+    fn1 = '/Users/mmir/Library/CloudStorage/Dropbox/v2chr_22.ibd'
+
+    df1 = pd.read_csv(fn1 , sep = '\s')
+
+
+
+
+
+    ##
+    import pandas as pd
+
+    fn = '/Users/mmir/Library/CloudStorage/Dropbox/flt_snps.prq'
+
+    df = pd.read_parquet(fn)
+
+    ##
+
+
+    df = pd.read_csv(fn)
+
+    ##
+
+
+
+
+
+    ##
+
+
+
+
+
+    ##
